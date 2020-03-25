@@ -1,18 +1,17 @@
 package os.juanamd.startapp;
 
-import android.content.Context;
 import android.util.Log;
 import android.view.View;
-import android.widget.RelativeLayout;
 
 import com.facebook.react.uimanager.SimpleViewManager;
 import com.facebook.react.uimanager.ThemedReactContext;
-import com.facebook.react.uimanager.annotations.ReactPropGroup;
+import com.facebook.react.views.view.ReactViewGroup;
 
 import com.startapp.android.publish.ads.banner.Banner;
-import com.startapp.android.publish.ads.banner.BannerListener;
+import com.startapp.android.publish.adsCommon.Ad;
+import com.startapp.android.publish.common.model.AdPreferences;
 
-public class RNStartappBanner extends SimpleViewManager<RelativeLayout> {
+public class RNStartappBanner extends SimpleViewManager<ReactViewGroup> {
 	private static final String TAG = "RNStartappBanner";
 
 	@Override
@@ -21,51 +20,63 @@ public class RNStartappBanner extends SimpleViewManager<RelativeLayout> {
 	}
 
 	@Override
-	protected RelativeLayout createViewInstance(ThemedReactContext themedReactContext) {
-		final Banner startappBanner = createBanner(themedReactContext);
+	protected ReactViewGroup createViewInstance(final ThemedReactContext themedReactContext) {
+		final Banner banner = createBanner(themedReactContext);
+        final ReactViewGroup mainView = new ReactViewGroup(themedReactContext) {
+			@Override
+			protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
+				super.onLayout(changed, left, top, right, bottom);
+				this.getViewTreeObserver().dispatchOnGlobalLayout();
+			}
+		};
+		mainView.addView(banner);
+		banner.loadAd();
+		return mainView;
+	}
 
-        RelativeLayout mainLayout = new RelativeLayout(themedReactContext) {
-			@Override protected void onAttachedToWindow() {
+	private Banner createBanner(final ThemedReactContext themedReactContext) {
+		final AdPreferences prefs = new AdPreferences();
+		//prefs.setTestMode(true);
+		return new Banner(themedReactContext, prefs) {
+			private boolean hasFailed = false;
+			@Override
+			protected void onAttachedToWindow() {
 				super.onAttachedToWindow();
-				Log.d(TAG, "onAttachedToWindow");
-				if (getChildCount() == 0) addView(startappBanner);
-				startappBanner.loadAd();
-				startappBanner.showBanner();
+				if (hasFailed) reload();
+				else showBanner();
 			}
 			@Override
 			protected void onDetachedFromWindow() {
 				super.onDetachedFromWindow();
-				Log.d(TAG, "onDetachedFromWindow");
-				startappBanner.hideBanner();
-				if (getChildCount() > 0) removeAllViews();
+				hideBanner();
 			}
 			@Override
-			public void requestLayout() {
-				super.requestLayout();
-				Log.d(TAG, "requestLayout");
-				if (getWidth() > 0 && getHeight() > 0) {
-					measure(getWidth(), getHeight());
-					layout(getLeft(), getTop(), getRight(), getBottom());
+			public void onReceiveAd(final Ad ad) {
+				super.onReceiveAd(ad);
+				Log.d(TAG, "onReceiveAd");
+				hasFailed = false;
+				try {
+					int width = ((View) getParent()).getWidth();
+					int height = ((View) getParent()).getHeight();
+					if (width > 0 && height > 0) {
+						measure(width, height);
+						layout(0, 0, width, height);
+					}
+				} catch (Exception e) {
+					Log.e(TAG, e.toString());
 				}
 			}
-		};
-		return mainLayout;
-	}
-
-	private Banner createBanner(ThemedReactContext themedReactContext) {
-		return new Banner(themedReactContext, new BannerListener() {
 			@Override
-			public void onReceiveAd(View banner) {
-				Log.d(TAG, "onReceiveAd");
-			}
-			@Override
-			public void onFailedToReceiveAd(View banner) {
+			public void onFailedToReceiveAd(final Ad ad) {
 				Log.d(TAG, "onFailedToReceiveAd");
+				super.onFailedToReceiveAd(ad);
+				hasFailed = true;
 			}
 			@Override
-			public void onClick(View banner) {
-				Log.d(TAG, "onClick");
+			public void setErrorMessage(final String error) {
+				Log.d(TAG, "setErrorMessage: " + error);
+				super.setErrorMessage(error);
 			}
-		});
+		};
 	}
 }

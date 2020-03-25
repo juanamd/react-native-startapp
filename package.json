@@ -1,7 +1,7 @@
 
 {
   "name": "react-native-startapp",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "React Native implementation of Startapp ads SDK",
   "main": "index.js",
   "scripts": {
