@@ -3,11 +3,14 @@ package os.juanamd.startapp;
 import android.content.Context;
 import android.util.Log;
 
+import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.Promise;
 import com.facebook.react.bridge.Callback;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
+import com.facebook.react.bridge.WritableMap;
+import com.facebook.react.modules.core.DeviceEventManagerModule;
 
 import com.startapp.android.publish.adsCommon.StartAppSDK;
 import com.startapp.android.publish.adsCommon.StartAppAd;
@@ -17,8 +20,17 @@ import com.startapp.android.publish.adsCommon.VideoListener;
 import com.startapp.android.publish.adsCommon.adListeners.AdDisplayListener;
 import com.startapp.android.publish.adsCommon.adListeners.AdEventListener;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class RNStartappModule extends ReactContextBaseJavaModule {
 	private static final String TAG = "RNStartapp";
+	private static final String INTERSTITIAL_MODE = "interstitial";
+	private static final String REWARDED_MODE = "rewarded";
+	private static final String UNKNOWN_MODE = "unknown";
+	private static final String DISPLAY_EVENT = "display";
+	private static final String CLICKED_ACTION = "clicked";
+	private static final String CLOSED_ACTION = "closed";
 
 	private StartAppAd interstitial;
 	private StartAppAd rewarded;
@@ -77,7 +89,7 @@ public class RNStartappModule extends ReactContextBaseJavaModule {
 	@ReactMethod
 	public void showRewarded(final Promise promise) {
 		try {
-			this.showAd(this.getRewarded(), promise);
+			this.showAd(this.getRewarded(), AdMode.REWARDED_VIDEO, promise);
 		} catch(Exception e) {
 			promise.reject(e);
 		}
@@ -95,7 +107,7 @@ public class RNStartappModule extends ReactContextBaseJavaModule {
 	@ReactMethod
 	public void showInterstitial(final Promise promise) {
 		try {
-			this.showAd(this.getInterstitial(), promise);
+			this.showAd(this.getInterstitial(), AdMode.AUTOMATIC, promise);
 		} catch(Exception e) {
 			promise.reject(e);
 		}
@@ -135,7 +147,8 @@ public class RNStartappModule extends ReactContextBaseJavaModule {
 		});
 	}
 
-	private void showAd(final StartAppAd startappAd, final Promise promise) {
+	private void showAd(final StartAppAd startappAd, final AdMode mode, final Promise promise) {
+		final RNStartappModule self = this;
 		startappAd.showAd(new AdDisplayListener() {
 			@Override
 			public void adDisplayed(Ad ad) {
@@ -149,10 +162,52 @@ public class RNStartappModule extends ReactContextBaseJavaModule {
 			}
 			@Override
 			public void adClicked(Ad ad) {
+				Log.d(TAG, "Ad clicked");
+				try {
+					WritableMap params = Arguments.createMap();
+					params.putString("mode", self.getModeName(mode));
+					params.putString("action", CLICKED_ACTION);
+					self.sendJsEvent(DISPLAY_EVENT, params);
+				} catch (Exception e) {
+					Log.e(TAG, "Error sending clicked event", e);
+				}
 			}
 			@Override
 			public void adHidden(Ad ad) {
+				Log.d(TAG, "Ad hidden");
+				try {
+					WritableMap params = Arguments.createMap();
+					params.putString("mode", self.getModeName(mode));
+					params.putString("action", CLOSED_ACTION);
+					self.sendJsEvent(DISPLAY_EVENT, params);
+				} catch (Exception e) {
+					Log.e(TAG, "Error sending closed event", e);
+				}
 			}
 		});
+	}
+
+	private String getModeName(final AdMode mode) {
+		if (mode == AdMode.AUTOMATIC) return INTERSTITIAL_MODE;
+		if (mode == AdMode.REWARDED_VIDEO) return REWARDED_MODE;
+		return UNKNOWN_MODE;
+	}
+
+	private void sendJsEvent(final String eventName, WritableMap params) {
+		getReactApplicationContext()
+			.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
+			.emit(eventName, params);
+	}
+
+	@Override
+	public Map<String, Object> getConstants() {
+		final Map<String, Object> constants = new HashMap<>();
+		constants.put("INTERSTITIAL_MODE", INTERSTITIAL_MODE);
+		constants.put("REWARDED_MODE", REWARDED_MODE);
+		constants.put("UNKNOWN_MODE", UNKNOWN_MODE);
+		constants.put("DISPLAY_EVENT", DISPLAY_EVENT);
+		constants.put("CLICKED_ACTION", CLICKED_ACTION);
+		constants.put("CLOSED_ACTION", CLOSED_ACTION);
+		return constants;
 	}
 }
