@@ -1,6 +1,7 @@
 package os.juanamd.startapp;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.util.Log;
 
 import com.facebook.react.bridge.Arguments;
@@ -12,13 +13,13 @@ import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
 
-import com.startapp.android.publish.adsCommon.StartAppSDK;
-import com.startapp.android.publish.adsCommon.StartAppAd;
-import com.startapp.android.publish.adsCommon.Ad;
-import com.startapp.android.publish.adsCommon.StartAppAd.AdMode;
-import com.startapp.android.publish.adsCommon.VideoListener;
-import com.startapp.android.publish.adsCommon.adListeners.AdDisplayListener;
-import com.startapp.android.publish.adsCommon.adListeners.AdEventListener;
+import com.startapp.sdk.adsbase.Ad;
+import com.startapp.sdk.adsbase.StartAppAd;
+import com.startapp.sdk.adsbase.StartAppAd.AdMode;
+import com.startapp.sdk.adsbase.StartAppSDK;
+import com.startapp.sdk.adsbase.VideoListener;
+import com.startapp.sdk.adsbase.adlisteners.AdEventListener;
+import com.startapp.sdk.adsbase.adlisteners.AdDisplayListener;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -45,11 +46,59 @@ public class RNStartappModule extends ReactContextBaseJavaModule {
 	}
 
 	@ReactMethod
+	public void hasPromptedStartAppConsent(final Promise promise) {
+		try {
+			SharedPreferences prefs = getReactApplicationContext()
+				.getSharedPreferences("com.startapp.sdk", Context.MODE_PRIVATE);
+			boolean hasPrompted = prefs.contains("consentApc");
+			promise.resolve(hasPrompted);
+			Log.d(TAG, "hasPromptedStartAppConsent: " + hasPrompted);
+		} catch (Exception e) {
+			promise.reject(e);
+		}
+	}
+
+	@ReactMethod
+	public void hasAgreedToStartAppConsent(final Promise promise) {
+		try {
+			SharedPreferences prefs = getReactApplicationContext()
+				.getSharedPreferences("com.startapp.sdk", Context.MODE_PRIVATE);
+			boolean hasAgreed = prefs.getBoolean("consentApc", false);
+			promise.resolve(hasAgreed);
+			Log.d(TAG, "hasAgreedToStartAppConsent: " + hasAgreed);
+		} catch (Exception e) {
+			promise.reject(e);
+		}
+	}
+
+	@ReactMethod
 	public void initialize(final String appId, final boolean useReturnAds, final Promise promise) {
 		try {
 			StartAppSDK.init(this.getReactApplicationContext(), appId, useReturnAds);
 			promise.resolve(null);
 			Log.d(TAG, "Initialized");
+		} catch (Exception e) {
+			promise.reject(e);
+		}
+	}
+
+	@ReactMethod
+	public void disableSplash(final Promise promise) {
+		try {
+			StartAppAd.disableSplash();
+			promise.resolve(null);
+			Log.d(TAG, "disableSplash");
+		} catch (Exception e) {
+			promise.reject(e);
+		}
+	}
+
+	@ReactMethod
+	public void setTestAdsEnabled(final boolean value, final Promise promise) {
+		try {
+			StartAppSDK.setTestAdsEnabled(value);
+			promise.resolve(null);
+			Log.d(TAG, "Set test ads: " + value);
 		} catch (Exception e) {
 			promise.reject(e);
 		}

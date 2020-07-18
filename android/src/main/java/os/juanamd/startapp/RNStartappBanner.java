@@ -7,9 +7,8 @@ import com.facebook.react.uimanager.SimpleViewManager;
 import com.facebook.react.uimanager.ThemedReactContext;
 import com.facebook.react.views.view.ReactViewGroup;
 
-import com.startapp.android.publish.ads.banner.Banner;
-import com.startapp.android.publish.adsCommon.Ad;
-import com.startapp.android.publish.common.model.AdPreferences;
+import com.startapp.sdk.ads.banner.Banner;
+import com.startapp.sdk.adsbase.Ad;
 
 public class RNStartappBanner extends SimpleViewManager<ReactViewGroup> {
 	private static final String TAG = "RNStartappBanner";
@@ -35,18 +34,16 @@ public class RNStartappBanner extends SimpleViewManager<ReactViewGroup> {
 	}
 
 	private Banner createBanner(final ThemedReactContext themedReactContext) {
-		final AdPreferences prefs = new AdPreferences();
-		//prefs.setTestMode(true);
-		return new Banner(themedReactContext, prefs) {
-			private boolean hasFailed = false;
+		return new Banner(themedReactContext) {
 			@Override
 			protected void onAttachedToWindow() {
+				Log.d(TAG, "onAttachedToWindow");
 				super.onAttachedToWindow();
-				if (hasFailed) reload();
-				else showBanner();
+				showBanner();
 			}
 			@Override
 			protected void onDetachedFromWindow() {
+				Log.d(TAG, "onDetachedFromWindow");
 				super.onDetachedFromWindow();
 				hideBanner();
 			}
@@ -54,13 +51,13 @@ public class RNStartappBanner extends SimpleViewManager<ReactViewGroup> {
 			public void onReceiveAd(final Ad ad) {
 				super.onReceiveAd(ad);
 				Log.d(TAG, "onReceiveAd");
-				hasFailed = false;
 				try {
 					int width = ((View) getParent()).getWidth();
 					int height = ((View) getParent()).getHeight();
 					if (width > 0 && height > 0) {
 						measure(width, height);
 						layout(0, 0, width, height);
+						showBanner();
 					}
 				} catch (Exception e) {
 					Log.e(TAG, e.toString());
@@ -70,7 +67,6 @@ public class RNStartappBanner extends SimpleViewManager<ReactViewGroup> {
 			public void onFailedToReceiveAd(final Ad ad) {
 				Log.d(TAG, "onFailedToReceiveAd");
 				super.onFailedToReceiveAd(ad);
-				hasFailed = true;
 			}
 			@Override
 			public void setErrorMessage(final String error) {
