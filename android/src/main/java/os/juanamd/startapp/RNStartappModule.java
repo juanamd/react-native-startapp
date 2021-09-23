@@ -1,7 +1,6 @@
 package os.juanamd.startapp;
 
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.util.Log;
 
 import com.facebook.react.bridge.Arguments;
@@ -43,32 +42,6 @@ public class RNStartappModule extends ReactContextBaseJavaModule {
 	@Override
 	public String getName() {
 		return TAG;
-	}
-
-	@ReactMethod
-	public void hasPromptedStartAppConsent(final Promise promise) {
-		try {
-			SharedPreferences prefs = getReactApplicationContext()
-				.getSharedPreferences("com.startapp.sdk", Context.MODE_PRIVATE);
-			boolean hasPrompted = prefs.contains("consentApc");
-			promise.resolve(hasPrompted);
-			Log.d(TAG, "hasPromptedStartAppConsent: " + hasPrompted);
-		} catch (Exception e) {
-			promise.reject(e);
-		}
-	}
-
-	@ReactMethod
-	public void hasAgreedToStartAppConsent(final Promise promise) {
-		try {
-			SharedPreferences prefs = getReactApplicationContext()
-				.getSharedPreferences("com.startapp.sdk", Context.MODE_PRIVATE);
-			boolean hasAgreed = prefs.getBoolean("consentApc", false);
-			promise.resolve(hasAgreed);
-			Log.d(TAG, "hasAgreedToStartAppConsent: " + hasAgreed);
-		} catch (Exception e) {
-			promise.reject(e);
-		}
 	}
 
 	@ReactMethod

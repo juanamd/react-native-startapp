@@ -13,8 +13,6 @@ import Startapp, { Banner, DISPLAY_EVENT, INTERSTITIAL_MODE, REWARDED_MODE, UNKN
 const useReturnAds = false;
 await Startapp.initialize(STARTAPP_APP_ID, useReturnAds);
 await Startapp.disableSplash();
-await Startapp.hasPromptedStartAppConsent(); // true if the automatic StartApp prompt has been accepted or declined; false otherwise
-await Startapp.hasAgreedToStartAppConsent(); // boolean
 await Startapp.setTestAdsEnabled(true);
 await Startapp.setUserConsent(true);
 
