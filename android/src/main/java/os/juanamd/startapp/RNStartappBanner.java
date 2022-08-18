@@ -36,13 +36,13 @@ public class RNStartappBanner extends SimpleViewManager<ReactViewGroup> {
 	private Banner createBanner(final ThemedReactContext themedReactContext) {
 		return new Banner(themedReactContext) {
 			@Override
-			protected void onAttachedToWindow() {
+			public void onAttachedToWindow() {
 				Log.d(TAG, "onAttachedToWindow");
 				super.onAttachedToWindow();
 				showBanner();
 			}
 			@Override
-			protected void onDetachedFromWindow() {
+			public void onDetachedFromWindow() {
 				Log.d(TAG, "onDetachedFromWindow");
 				super.onDetachedFromWindow();
 				hideBanner();
