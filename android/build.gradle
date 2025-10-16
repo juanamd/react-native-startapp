@@ -1,21 +1,27 @@
 apply plugin: 'com.android.library'
 
-def DEFAULT_COMPILE_SDK_VERSION = 28
-def DEFAULT_BUILD_TOOLS_VERSION = "28.0.3"
-def DEFAULT_TARGET_SDK_VERSION = 28
+ext {
+	DEFAULT_COMPILE_SDK_VERSION = 28
+	DEFAULT_BUILD_TOOLS_VERSION = "28.0.3"
+	DEFAULT_TARGET_SDK_VERSION = 28
+	DEFAULT_STARTAPP_SDK_VERSION = "5.2.4"
+}
 
 android {
-	compileSdkVersion rootProject.hasProperty('compileSdkVersion') ? rootProject.compileSdkVersion : DEFAULT_COMPILE_SDK_VERSION
-	buildToolsVersion rootProject.hasProperty('buildToolsVersion') ? rootProject.buildToolsVersion : DEFAULT_BUILD_TOOLS_VERSION
+	compileSdkVersion rootProject.findProperty('compileSdkVersion') ?: DEFAULT_COMPILE_SDK_VERSION
+	buildToolsVersion rootProject.findProperty('buildToolsVersion') ?: DEFAULT_BUILD_TOOLS_VERSION
+
 	defaultConfig {
 		minSdkVersion 16
-		targetSdkVersion rootProject.hasProperty('targetSdkVersion') ? rootProject.targetSdkVersion : DEFAULT_TARGET_SDK_VERSION
+		targetSdkVersion rootProject.findProperty('targetSdkVersion') ?: DEFAULT_TARGET_SDK_VERSION
 		versionCode 1
 		versionName "1.0"
 	}
 }
 
+def startappSdk = rootProject.findProperty('startappSdkVersion') ?: DEFAULT_STARTAPP_SDK_VERSION
+
 dependencies {
 	implementation 'com.facebook.react:react-native:+'
-	implementation 'com.startapp:inapp-sdk:4.10.7'
+	implementation "com.startapp:inapp-sdk:${startappSdk}"
 }
